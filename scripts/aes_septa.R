@@ -92,9 +92,9 @@ scale_color_septa <- function(..., pal_list = pal_septa_list, palette = "plan", 
     pal <- rev(pal)
   }
   if (discrete) {
-    scale_color_manual(..., values = pal)
+    ggplot2::scale_color_manual(..., values = pal)
   } else {
-    scale_color_gradientn(..., colors = pal)
+    ggplot2::scale_color_gradientn(..., colors = pal)
   }
 }
 
@@ -109,14 +109,14 @@ scale_fill_septa <- function(..., pal_list = pal_septa_list, palette = "plan", d
     pal <- rev(pal)
   }
   if (discrete) {
-    scale_fill_manual(..., values = pal)
+    ggplot2::scale_fill_manual(..., values = pal)
   } else {
-    scale_fill_gradientn(..., colors = pal)
+    ggplot2::scale_fill_gradientn(..., colors = pal)
   }
 }
 
 
-# Custom SEPTA ggplot theme based on minimal ------------------------------
+# Custom SEPTA ggplot2 theme based on minimal ------------------------------
 
 theme_septa <- function(
   ...,
@@ -125,24 +125,29 @@ theme_septa <- function(
   title_align = "panel",
   legend_pos = "right"
 ) {
-  theme_minimal() %+replace%
-    theme(
-      axis.ticks = element_line(color = "grey92"),
+  ggplot2::theme_minimal() %+replace%
+    ggplot2::theme(
+      axis.ticks = ggplot2::element_line(color = "grey92"),
       legend.position = legend_pos,
-      title = element_text(size = rel(1.25), face = 'bold', family = font[1], ),
-      text = element_text(size = base_size, family = font[2], color = "#444444"),
-      strip.text = element_text(size = base_size, family = font[2], hjust = 0),
-      panel.grid.minor.y = element_blank(),
-      plot.background = element_rect(fill = '#FFFFFF', color = '#FFFFFF'),
+      title = ggplot2::element_text(size = rel(1.25), face = 'bold', family = font[1], ),
+      text = ggplot2::element_text(size = base_size, family = font[2], color = "#444444"),
+      strip.text = ggplot2::element_text(size = base_size, family = font[2], hjust = 0),
+      panel.grid.minor.y = ggplot2::element_blank(),
+      plot.background = ggplot2::element_rect(fill = '#FFFFFF', color = '#FFFFFF'),
       plot.title.position = title_align,
       plot.caption.position = "plot",
       plot.margin = margin(12, 24, 12, 24),
-      plot.title = element_text(hjust = 1, margin = margin(0, 0, 6, 0)),
-      plot.subtitle = element_text(size = base_size, family = font[2], hjust = 1, margin = margin(0, 0, 12, 0)),
-      plot.caption = element_text(size = rel(0.5), family = font[2], hjust = 1),
-      legend.title = element_text(size = base_size),
-      axis.title = element_text(size = rel(0.75), vjust = -1),
-      axis.text = element_text(size = rel(0.75), margin = margin(0, 0, 3, 0))
+      plot.title = ggplot2::element_text(hjust = 1, margin = margin(0, 0, 6, 0)),
+      plot.subtitle = ggplot2::element_text(
+        size = base_size,
+        family = font[2],
+        hjust = 1,
+        margin = margin(0, 0, 12, 0)
+      ),
+      plot.caption = ggplot2::element_text(size = rel(0.5), family = font[2], hjust = 1),
+      legend.title = ggplot2::element_text(size = base_size),
+      axis.title = ggplot2::element_text(size = rel(0.75), vjust = -1),
+      axis.text = ggplot2::element_text(size = rel(0.75), margin = margin(0, 0, 3, 0))
     )
 }
 
