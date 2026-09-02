@@ -1,24 +1,65 @@
 source("scripts/fxn_swiftly_api.R")
 
 get_trips_performed <- function(selAgency, selRoute, selDirection, selStartDate, selEndDate = NULL) {
+
+  raw_trips <- get_trip_obvs(
+    agencyKey = selAgency,
+    routes = selRoute,
+    directionId = selDirection,
+    startDate = selStartDate,
+    endDate = selEndDate
+  )
+
+  # FIX 2026-09-04: trip_id_scheduled was previously sourced from the same
+  # tripId column as trip_id_performed, so the two could never differ. TIDES
+  # keeps them separate on purpose, to show a trip that was added, rerouted,
+  # or otherwise did not match its originally scheduled counterpart.
+  #
+  # get_trip_obvs() does not appear to return a distinct scheduled-trip
+  # identifier today. Rather than silently duplicating trip_id_performed
+  # again, this looks for a scheduledTripId field and falls back to NA with
+  # a warning if one is not present, so the gap stays visible instead of
+  # quietly wrong. Confirm the correct source field with Swiftly support and
+  # update this block once it is known.
+  if ("scheduledTripId" %in% names(raw_trips)) {
+    raw_trips <- dplyr::mutate(raw_trips, trip_id_scheduled = scheduledTripId)
+  } else {
+    raw_trips <- dplyr::mutate(raw_trips, trip_id_scheduled = NA_character_)
+    warning(
+      "get_trips_performed(): no scheduledTripId field found in get_trip_obvs() ",
+      "output. trip_id_scheduled has been set to NA rather than duplicating ",
+      "trip_id_performed. See the FIX note in this function.",
+      call. = FALSE
+    )
+  }
+
+  raw_trips <- dplyr::mutate(raw_trips, routeId = as.character(routeId))
+
+  routes_ref <- dplyr::select(
+    # FIX 2026-09-04: get_routes()'s own parameter is named `route`
+    # (singular). Calling it with `routes = selRoute` matched no formal
+    # argument and errored with "unused argument (routes = selRoute)" every
+    # time this function ran.
+    get_routes(agencyKey = selAgency, route = selRoute)$routes,
+    routeId = id,
+    route_type_agency = type
+  )
+
   dplyr::left_join(
-    dplyr::mutate(
-      get_trip_obvs(
-        agencyKey = selAgency,
-        routes = selRoute,
-        directionId = selDirection,
-        startDate = selStartDate,
-        endDate = selEndDate
-      ),
-      routeId = as.character(routeId)
-    ),
-    dplyr::select(get_routes(agencyKey = selAgency, routes = selRoute)$routes, routeId = id, route_type_agency = type)
+    raw_trips,
+    routes_ref,
+    # FIX 2026-09-04: this join previously had no `by =`, so it matched on
+    # whichever column names happened to be shared between the two tables.
+    # That worked here, but only by coincidence. Naming the key explicitly
+    # means a future column with a matching name cannot silently change
+    # what gets joined.
+    by = "routeId"
   ) |>
     dplyr::select(
       service_date = serviceDate,
       trip_id_performed = tripId,
       vehicle_id = vehicleIds,
-      trip_id_scheduled = tripId,
+      trip_id_scheduled,
       route_id = routeId,
       route_type_agency,
       pattern_id = tripPatternId,
@@ -44,8 +85,15 @@ get_stop_visits <- function(selAgency, selRoute, selDirection, selStartDate, sel
     dplyr::mutate(
       dwell = observed_departure_time - observed_arrival_time,
       .deviance = observed_arrival_time - scheduled_arrival_time,
+      # FIX 2026-09-04: previously grouped by service_date and stop_id only.
+      # selRoute accepts a comma-separated list (the worked example pulls
+      # "45,43" in one call), so at any stop shared by two routes, the
+      # gap-since-last-vehicle calculation was blending unrelated services
+      # together. route_id and direction_id are now part of the grouping
+      # key. They are dropped from the final table below regardless, since
+      # TIDES keeps route and direction in trips_performed, not stop_visits.
       .headway = observed_arrival_time - dplyr::lag(observed_arrival_time),
-      .by = c(service_date, stop_id)
+      .by = c(service_date, route_id, direction_id, stop_id)
     ) |>
     dplyr::select(
       service_date,
@@ -59,7 +107,10 @@ get_stop_visits <- function(selAgency, selRoute, selDirection, selStartDate, sel
       schedule_arrival_time = scheduled_arrival_time,
       schedule_departure_time = scheduled_departure_time,
       actual_arrival_time = observed_arrival_time,
-      actual_deprature_time = observed_departure_time,
+      # FIX 2026-09-04: corrected the misspelled column name
+      # actual_deprature_time -> actual_departure_time. This is a breaking
+      # rename for anything already reading the old name; see the memo.
+      actual_departure_time = observed_departure_time,
       .deviance,
       .headway
     )
