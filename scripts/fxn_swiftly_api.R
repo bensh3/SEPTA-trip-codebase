@@ -27,31 +27,10 @@ get_swiftly <- function(agencyKey, category, resource, startDate, endDate, ..., 
   }
   params <- list(startDate = startDate, endDate = endDate, ..., format = resformat)
 
-  # FIX 2026-09-04: Transit and Regional Rail use separate Swiftly API keys.
-  # This previously always read Sys.getenv("swiftly_api_hist") regardless of
-  # agencyKey, so a "septa-rail" request silently authenticated with the
-  # Transit credential instead of failing loudly. Each agency now reads its
-  # own environment variable, with the original variable kept as the
-  # fallback so nothing breaks if agencyKey is NULL.
-  #
-  #   Sys.setenv(swiftly_api_hist      = "<transit key>")
-  #   Sys.setenv(swiftly_api_rail_hist = "<regional rail key>")
   api_key <- if (is.null(agencyKey)) {
-    Sys.getenv("swiftly_api_hist")
+    readline(prompt = "Please enter your Swiftly API key: ")
   } else {
-    switch(
-      agencyKey,
-      "septa"      = Sys.getenv("swiftly_api_hist"),
-      "septa-rail" = Sys.getenv("swiftly_api_rail_hist"),
-      Sys.getenv("swiftly_api_hist")
-    )
-  }
-  if (!nzchar(api_key)) {
-    stop(
-      "No Swiftly API key found for agency '", agencyKey, "'. ",
-      "Set it first, e.g. Sys.setenv(swiftly_api_rail_hist = \"<key>\").",
-      call. = FALSE
-    )
+    Sys.getenv("swiftly_api_hist")
   }
 
   res <- httr2::request("https://api.goswift.ly/") |>

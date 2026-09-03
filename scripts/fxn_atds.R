@@ -85,11 +85,5 @@ get_tardy_daily <- function(selection = NULL, oneDate = NULL) {
     }
     oneDate <- format(oneDate, "%m/%d/%Y")
   }
-  # FIX 2026-09-04: date = oneDate was previously written as an argument to
-  # paste0(), which ignores argument names and just concatenates the value
-  # onto the resource string, e.g.
-  #   "tardy/get-daily-delays-data.php09/04/2026"
-  # instead of sending it as a filter. Every other ATDS function passes date
-  # directly to get_rroc(); this now does the same.
   get_rroc(paste0("tardy/get-daily-", selection, "-data.php"), date = oneDate)
 }
