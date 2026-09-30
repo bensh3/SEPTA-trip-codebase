@@ -132,7 +132,6 @@ theme_septa <- function(
       title = ggplot2::element_text(size = rel(1.25), face = 'bold', family = font[1], ),
       text = ggplot2::element_text(size = base_size, family = font[2], color = "#444444"),
       strip.text = ggplot2::element_text(size = base_size, family = font[2], hjust = 0),
-      panel.grid.minor.y = ggplot2::element_blank(),
       plot.background = ggplot2::element_rect(fill = '#FFFFFF', color = '#FFFFFF'),
       plot.title.position = title_align,
       plot.caption.position = "plot",

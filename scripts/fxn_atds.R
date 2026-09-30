@@ -85,5 +85,5 @@ get_tardy_daily <- function(selection = NULL, oneDate = NULL) {
     }
     oneDate <- format(oneDate, "%m/%d/%Y")
   }
-  get_rroc(paste0("tardy/get-daily-", selection, "-data.php"), date = oneDate)
+  get_rroc(paste0("get-tardy-daily-", selection, "-data.php"), date = oneDate)
 }
